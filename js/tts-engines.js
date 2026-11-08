@@ -115,7 +115,7 @@ function WebSpeechEngine() {
       if (event.error == "canceled" || event.error == "interrupted") return;
       onEvent({type: 'error', error: new Error(event.error)});
     };
-    speechSynthesis.cancel()
+    if (speechSynthesis.speaking || speechSynthesis.pending) speechSynthesis.cancel();
     speechSynthesis.speak(utter);
   }
   this.stop = function() {
