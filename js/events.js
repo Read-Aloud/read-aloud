@@ -29,6 +29,7 @@ var handlers = {
   stop: stop,
   pause: pause,
   resume: resume,
+  setRate: setRate,
   getPlaybackState: getPlaybackState,
   forward: forward,
   rewind: rewind,
@@ -309,6 +310,10 @@ function pause() {
 
 function resume() {
   return sendToPlayer({method: "resume"})
+}
+
+function setRate(rate) {
+  return sendToPlayer({method: "setRate", args: [rate]})
 }
 
 async function getPlaybackState() {

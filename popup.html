@@ -60,6 +60,18 @@
           <i class="material-icons"><svg><use href="img/icons.svg#dark_mode"/></svg></i>
         </button>
       </div>
+      <span id="playback-rate-control" class="btn-group" role="group" aria-labelledby="playback-rate-label" hidden>
+        <label id="playback-rate-label" class="visually-hidden" for="playback-rate" data-i18n="options_rate_label"></label>
+        <button id="decrease-playback-rate" type="button" class="btn">
+          <i class="material-icons" aria-hidden="true"><svg><use href="img/icons.svg#remove"/></svg></i>
+        </button>
+        <span class="playback-rate-value">
+          <input id="playback-rate" type="number" min="0.1" max="10" step="0.05" value="1" inputmode="decimal"><span aria-hidden="true">×</span>
+        </span>
+        <button id="increase-playback-rate" type="button" class="btn">
+          <i class="material-icons" aria-hidden="true"><svg><use href="img/icons.svg#add"/></svg></i>
+        </button>
+      </span>
     </div>
   </div>
   <div id="footer"><a id="report-issue" href="report.html?referer=popup.html"></a></div>

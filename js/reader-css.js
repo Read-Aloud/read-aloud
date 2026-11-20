@@ -343,6 +343,47 @@ var readAloudReaderCss = `
   cursor: default;
 }
 
+.ra-bar button.ra-speed-button {
+  width: 52px;
+  border-radius: 18px;
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.ra-bar button:disabled, .ra-speed-options button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.ra-bar button.ra-speed-button[aria-expanded="true"] { background: rgba(255, 255, 255, 0.12); }
+@media (max-width: 400px) {
+  .ra-bar { gap: 0; padding: 6px; }
+  .ra-bar button { width: 30px; height: 34px; }
+  .ra-bar button.ra-primary { width: 36px; height: 36px; }
+  .ra-bar button.ra-speed-button { width: 44px; }
+}
+
+.ra-speed-menu {
+  width: min(300px, calc(100% - 24px));
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+.ra-speed-options {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 4px;
+}
+.ra-speed-options button {
+  height: 34px;
+  border-radius: 6px;
+  background: #111111;
+  color: #e8e8e8;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.ra-speed-options button:hover { background: #454545; }
+.ra-speed-options button.selected { background: #f06040; color: #ffffff; }
+
 @media (prefers-reduced-motion: reduce) {
   .ra-chunk { transition: none; }
   .ra-loading::after { animation-duration: 2s; }

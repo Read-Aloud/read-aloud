@@ -349,5 +349,11 @@
   },
   "playback_status_toggle_dark_mode": {
     "message": "Przełącz tryb ciemny"
+  },
+  "playback_status_slower": {
+    "message": "Wolniej"
+  },
+  "playback_status_faster": {
+    "message": "Szybciej"
   }
 }

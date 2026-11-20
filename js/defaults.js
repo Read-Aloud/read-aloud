@@ -916,17 +916,21 @@ function truncateRepeatedChars(text, max) {
   return result
 }
 
-function playAudioHere(urlPromise, options, playbackState$) {
+function playAudioHere(urlPromise, options, playbackState$, rate$ = rxjs.of(options.rate || 1)) {
   const audio = getSingletonAudio()
   const silenceTrack = getSilenceTrack()
   return rxjs.from(urlPromise).pipe(
     rxjs.exhaustMap(url =>
       new rxjs.Observable(observer => {
-        audio.defaultPlaybackRate = (options.rate || 1) * (options.rateAdjust || 1)
+        const rateSubscription = rate$.subscribe(rate => {
+          audio.defaultPlaybackRate = rate * (options.rateAdjust || 1)
+          audio.playbackRate = audio.defaultPlaybackRate
+        })
         audio.volume = options.volume || 1
         audio.oncanplay = () => observer.next()
         audio.onerror = () => observer.error(new Error(audio.error.message || audio.error.code))
         audio.src = url
+        return () => rateSubscription.unsubscribe()
       })
     ),
     rxjs.exhaustMap(() =>

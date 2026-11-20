@@ -352,5 +352,11 @@
   },
   "playback_status_toggle_dark_mode": {
     "message": "Bật/tắt chế độ tối"
+  },
+  "playback_status_slower": {
+    "message": "Chậm hơn"
+  },
+  "playback_status_faster": {
+    "message": "Nhanh hơn"
   }
 }

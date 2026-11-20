@@ -349,5 +349,11 @@
   },
   "playback_status_toggle_dark_mode": {
     "message": "Slå mørk tilstand til eller fra"
+  },
+  "playback_status_slower": {
+    "message": "Langsommere"
+  },
+  "playback_status_faster": {
+    "message": "Hurtigere"
   }
 }

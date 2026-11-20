@@ -54,6 +54,60 @@ body.is-stopped #buttons {
   vertical-align: text-bottom;
 }
 
+/* Speed stepper: − [1.25×] +, styled like the other toolbar button groups. */
+#toolbar #playback-rate-control {
+  position: relative;
+  margin-left: auto;
+}
+#toolbar #playback-rate-control[hidden] { display: none; }
+#playback-rate-control .visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+#toolbar #decrease-playback-rate { border-radius: 6px 0 0 6px; }
+#toolbar #playback-rate-control .btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+  background: transparent;
+}
+.playback-rate-value {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 30px;
+  padding: 0 4px;
+  box-shadow: inset 1px 0 var(--control-border), inset -1px 0 var(--control-border);
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--control-ink);
+  cursor: text;
+}
+#playback-rate {
+  box-sizing: border-box;
+  width: 3.4em;
+  height: 24px;
+  padding: 0 2px;
+  border: 0;
+  border-radius: 4px;
+  font: inherit;
+  text-align: right;
+  color: inherit;
+  background: transparent;
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+#playback-rate::-webkit-inner-spin-button,
+#playback-rate::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+#playback-rate:hover, #playback-rate:focus { background: var(--control-hover); }
+#playback-rate:focus { outline: none; }
+#playback-rate:focus-visible { outline: 2px solid var(--control-focus); outline-offset: 0; }
+.dark-mode #playback-rate { color-scheme: dark; }
+
 body.is-popup #highlight {
   width: 350px;
   height: 300px;

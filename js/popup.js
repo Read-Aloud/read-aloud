@@ -60,6 +60,13 @@ async function init() {
   $("#btnSettings").click(onSettings);
   $("#btnForward").click(onForward);
   $("#btnRewind").click(onRewind);
+  document.getElementById("playback-rate").addEventListener("change", onPlaybackRateChange)
+  document.getElementById("playback-rate").addEventListener("input", () => {playbackRateReconciliation = null; updatePlaybackRateStepper()})
+  document.getElementById("playback-rate").addEventListener("keydown", onPlaybackRateKeydown)
+  document.getElementById("decrease-playback-rate").addEventListener("click", () => stepPlaybackRate(-1))
+  document.getElementById("increase-playback-rate").addEventListener("click", () => stepPlaybackRate(+1))
+  document.querySelector(".playback-rate-value").addEventListener("click", () => document.getElementById("playback-rate").focus())
+  document.querySelector('label[for="playback-rate"]').textContent = brapi.i18n.getMessage("options_rate_label")
   $("#decrease-font-size").click(changeFontSize.bind(null, -1));
   $("#increase-font-size").click(changeFontSize.bind(null, +1));
   $("#decrease-window-size").click(changeWindowSize.bind(null, -1));
@@ -71,6 +78,8 @@ async function init() {
     ["decrease-window-size", "smaller_popup"],
     ["increase-window-size", "larger_popup"],
     ["toggle-dark-mode", "toggle_dark_mode"],
+    ["decrease-playback-rate", "slower"],
+    ["increase-playback-rate", "faster"],
   ]) {
     const label = brapi.i18n.getMessage(`playback_status_${key}`)
     $("#" + id).attr({title: label, "aria-label": label})
@@ -196,6 +205,7 @@ async function updateButtons() {
 
   if (playbackErr) handleError(playbackErr)
   updatePlaybackStatus(state, speech)
+  updatePlaybackRate(state, speech)
 
   $("body").toggleClass("is-stopped", state == "STOPPED");
   $("#imgLoading").toggle(state == "LOADING");
@@ -214,6 +224,97 @@ async function updateButtons() {
     $("body").removeClass("has-highlight")
     $("#highlight").hide()
   }
+}
+
+function updatePlaybackRate(state, speech) {
+  document.getElementById("playback-rate-control").hidden = speech?.canChangeRate !== true || !["PLAYING", "PAUSED", "LOADING"].includes(state)
+  const input = document.getElementById("playback-rate")
+  // Only a failed, unchanged edit may bypass the normal focused-edit protection.
+  const reconcile = playbackRateReconciliation
+    && input.value === playbackRateReconciliation.inputValue
+  if (!input.disabled) {
+    playbackRateReconciliation = null
+    if (reconcile || document.activeElement !== input) {
+      input.value = roundPlaybackRate(speech?.rate || defaults.rate)
+    }
+  }
+  updatePlaybackRateStepper()
+}
+
+let playbackRateReconciliation
+const PLAYBACK_RATE_STEPS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.5, 3]
+
+function roundPlaybackRate(rate) {
+  return Math.round(rate * 100) / 100
+}
+
+function nextPlaybackRate(rate, direction) {
+  return direction > 0
+    ? PLAYBACK_RATE_STEPS.find(step => step > rate + 1e-9)
+    : PLAYBACK_RATE_STEPS.findLast(step => step < rate - 1e-9)
+}
+
+function updatePlaybackRateStepper() {
+  const input = document.getElementById("playback-rate")
+  const rate = Number(input.value)
+  const valid = input.value !== "" && Number.isFinite(rate)
+  document.getElementById("decrease-playback-rate").disabled = input.disabled || !valid || nextPlaybackRate(rate, -1) === undefined
+  document.getElementById("increase-playback-rate").disabled = input.disabled || !valid || nextPlaybackRate(rate, +1) === undefined
+}
+
+// − and + snap to the nearest step in that direction, so a typed 1.33 goes to 1.25 or 1.5.
+function stepPlaybackRate(direction) {
+  const input = document.getElementById("playback-rate")
+  if (input.disabled) return
+  const rate = nextPlaybackRate(Number(input.value), direction)
+  if (rate === undefined) return
+  input.value = rate
+  return onPlaybackRateChange()
+}
+
+function onPlaybackRateKeydown(event) {
+  if (event.key !== "Escape") return
+  // Discard the edit and let the next poll show the live rate.
+  const input = event.currentTarget
+  event.preventDefault()
+  event.stopPropagation()
+  playbackRateReconciliation = null
+  input.blur()
+  bgPageInvoke("getPlaybackState")
+    .then(({state, speechInfo}) => updatePlaybackRate(state, speechInfo))
+    .catch(handleError)
+}
+
+async function reconcilePlaybackRate() {
+  const input = document.getElementById("playback-rate")
+  const pending = playbackRateReconciliation = {inputValue: input.value}
+  try {
+    const {state, speechInfo} = await bgPageInvoke("getPlaybackState")
+    // A poll or a newer edit/request supersedes this read, including capability changes.
+    if (playbackRateReconciliation === pending) updatePlaybackRate(state, speechInfo)
+  } catch (err) {
+    handleError(err)
+  }
+}
+
+async function onPlaybackRateChange() {
+  const input = document.getElementById("playback-rate")
+  if (document.getElementById("playback-rate-control").hidden || input.disabled) return
+  playbackRateReconciliation = null
+  const rate = Number(input.value)
+  if (!Number.isFinite(rate) || rate < 0.1 || rate > 10) return
+  input.disabled = true
+  updatePlaybackRateStepper()
+  let applied = false
+  try {
+    applied = await bgPageInvoke("setRate", [rate])
+  } catch (err) {
+    handleError(err)
+  } finally {
+    input.disabled = false
+    updatePlaybackRateStepper()
+  }
+  if (applied === false) await reconcilePlaybackRate()
 }
 
 function updateHighlighting(speech) {

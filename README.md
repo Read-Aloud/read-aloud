@@ -85,6 +85,21 @@ ALT/Option + Comma       : Rewind
 ALT/Option + Period      : Forward
 ```
 
+### Playback Speed
+
+While reading, use the **Speed** number field at the bottom of the player to change
+the rate without opening Settings. Use its arrows or enter a multiplier (for
+example, `1.3` for 1.3× speed). The range is 0.1×–10×, subject to the selected voice's
+capabilities, and the value is saved using the same per-voice preference as Settings.
+Changing speed while paused does not resume playback. These live controls are
+hidden for voices that require restarting speech, including browser-native
+voices. For those voices, set the speed in Settings before starting playback.
+
+In reader mode, click the current-rate button (for example **1×**) in the floating
+control bar to choose a preset: 0.5×, 0.75×, 1×, 1.25×, 1.5×, 1.75×, 2×, or 3×.
+For supported voices, the button remains available when the reader is minimized.
+Press Escape or click outside the presets to dismiss them.
+
 ### Customization
 
 You can change the voice, reading speed, pitch, or enable text highlighting:

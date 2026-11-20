@@ -5,7 +5,7 @@
   current$.pipe(
     rxjs.switchMap(current => {
       if (current) {
-        return playAudioHere(Promise.resolve(current.url), current.options, current.playbackState$).pipe(
+        return playAudioHere(Promise.resolve(current.url), current.options, current.playbackState$, current.rate$).pipe(
           rxjs.catchError(err => rxjs.of({type: "error", error: errorToJson(err)})),
           rxjs.tap(event => {
             sendToPlayer({method: "offscreenPlaybackEvent", args: [event, current.id]})
@@ -29,6 +29,7 @@
       id,
       url,
       options,
+      rate$: new rxjs.BehaviorSubject(options.rate || 1),
       playbackState$: new rxjs.BehaviorSubject("resumed")
     })
     return true
@@ -39,13 +40,18 @@
     return true
   }
 
+  function setRate(rate, id) {
+    if (current$.value && current$.value.id == id) current$.value.rate$.next(rate)
+    return true
+  }
+
   function stop(id) {
     if (current$.value && current$.value.id == id) current$.next(null)
     return true
   }
 
   // Register only after state and the audio subscription are initialized.
-  registerMessageListener("offscreen", {ping: () => true, play, pause, stop})
+  registerMessageListener("offscreen", {ping: () => true, play, pause, stop, setRate})
 
   async function sendToPlayer(message) {
     message.dest = "player"

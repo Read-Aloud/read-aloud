@@ -227,6 +227,7 @@ var messageHandlers = {
   stop: stop,
   pause: pause,
   resume: resume,
+  setRate: setRate,
   getPlaybackState: getPlaybackState,
   forward: forward,
   rewind: rewind,
@@ -332,6 +333,21 @@ function resume() {
   else return Promise.resolve()
 }
 
+async function setRate(rate) {
+  if (typeof rate != "number" || !Number.isFinite(rate) || rate < 0.1 || rate > 10) {
+    throw new Error("Invalid playback rate")
+  }
+  const doc = activeDoc
+  if (!doc) return
+  const settings = await getSettings()
+  if (doc !== activeDoc) return
+  const speech = await doc.getActiveSpeech()
+  if (!speech || doc !== activeDoc) return
+  if (await speech.setRate(rate) === false) return false
+  await updateSetting("rate" + (settings.voiceName || ""), rate)
+  return true
+}
+
 function getPlaybackState() {
   if (activeDoc) {
     return Promise.all([activeDoc.getState(), activeDoc.getActiveSpeech()])
@@ -417,12 +433,20 @@ function reportError(err) {
 }
 
 function playAudio(urlPromise, options, playbackState$) {
-  if (brapi.offscreen) {
-    return playAudioOffscreen(urlPromise, options, playbackState$)
-  }
-  else {
-    return playAudioHere(requestAudioPlaybackPermission().then(() => urlPromise), options, playbackState$)
-  }
+  // Cloud playback can subscribe while Speech is still being constructed.
+  // Remote engines instead deliver sentence audio after activeSpeech is set.
+  const {rate$: speechRate$, ...audioOptions} = options
+  return rxjs.defer(() => speechRate$ ? Promise.resolve({rate$: speechRate$})
+    : activeDoc ? activeDoc.getActiveSpeech() : Promise.resolve(null)).pipe(
+    rxjs.switchMap(speech => {
+      const rate$ = speech?.rate$ || rxjs.of(options.rate || 1)
+      if (brapi.offscreen) {
+        return playAudioOffscreen(urlPromise, audioOptions, playbackState$, rate$)
+      } else {
+        return playAudioHere(requestAudioPlaybackPermission().then(() => urlPromise), audioOptions, playbackState$, rate$)
+      }
+    })
+  )
 }
 
 var requestAudioPlaybackPermission = lazy(async function() {
@@ -449,12 +473,21 @@ function queueOffscreenCommand(command) {
   return result
 }
 
-function playAudioOffscreen(urlPromise, options, playbackState$) {
+function playAudioOffscreen(urlPromise, options, playbackState$, rate$ = rxjs.of(options.rate || 1)) {
   return new rxjs.Observable(observer => {
     const id = crypto.randomUUID()
     let disposed = false
     let revision = 0
     let subscription
+    let started = false
+    const rateSubscription = rate$.pipe(rxjs.distinctUntilChanged()).subscribe(rate => {
+      options = {...options, rate}
+      if (started) {
+        queueOffscreenCommand(async () => {
+          if (!disposed) await sendToOffscreen({method: "setRate", args: [rate, id]})
+        }).catch(err => {if (!disposed) observer.error(err)})
+      }
+    })
     const eventHandler = (event, sessionId) => {
       if (sessionId != id || disposed) return
       if (event.type == "error") observer.error(event.error)
@@ -482,8 +515,13 @@ function playAudioOffscreen(urlPromise, options, playbackState$) {
                 if (disposed || request != revision) return
                 // Idempotent for this session: resume existing audio, or start
                 // again if Chrome discarded the document while it was paused.
-                const result = await sendToOffscreen({method: "play", args: [url, options, id]})
+                const playbackOptions = options
+                const result = await sendToOffscreen({method: "play", args: [url, playbackOptions, id]})
                 if (result !== true) throw new Error("Offscreen document inaccessible")
+                started = true
+                if (!disposed && options.rate != playbackOptions.rate) {
+                  await sendToOffscreen({method: "setRate", args: [options.rate, id]})
+                }
                 return
               } catch (err) {
                 if (disposed || request != revision) return
@@ -502,6 +540,7 @@ function playAudioOffscreen(urlPromise, options, playbackState$) {
       disposed = true
       revision++
       if (subscription) subscription.unsubscribe()
+      rateSubscription.unsubscribe()
       offscreenEventHandlers.delete(id)
       queueOffscreenCommand(() => sendToOffscreen({method: "stop", args: [id]})).catch(() => {})
     }

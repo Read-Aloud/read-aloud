@@ -1,6 +1,9 @@
 
 function Speech(texts, options) {
-  options.rate = (options.rate || 1) * (isGoogleNetworkVoice(options.voice) ? 0.9 : 1);
+  let rate = options.rate || 1
+  const rateAdjustment = isGoogleNetworkVoice(options.voice) ? 0.9 : 1
+  options.rate = rate * rateAdjustment
+  this.rate$ = options.rate$ = new rxjs.BehaviorSubject(options.rate)
 
   const wordReplacements = parseWordReplacements(options.wordReplacements).rules
   if (wordReplacements.length) {
@@ -11,11 +14,22 @@ function Speech(texts, options) {
   if (texts.length) texts = getChunks(texts.join("\n\n"));
 
   const engine = pickEngine()
+  const canChangeRate = engine.stop == null || engine === piperTtsEngine
+    || engine === supertonicTtsEngine || engine === pocketTtsEngine
   const statusId = crypto.randomUUID()
   let navigationRevision = 0
   let enginePlaybackState
 
   this.options = options;
+  this.setRate = value => {
+    if (!canChangeRate) return false
+    if (value == rate) return true
+    rate = value
+    options.rate = rate * rateAdjustment
+    this.rate$.next(options.rate)
+    navigationRevision++
+    return true
+  }
   this.play = () => playbackState$.next("resumed")
   this.pause = () => playbackState$.next("paused")
   this.stop = () => cmd$.error({name: "CancellationException", message: "Playback cancelled"})
@@ -97,6 +111,8 @@ function Speech(texts, options) {
       },
       statusId,
       navigationRevision,
+      canChangeRate,
+      rate,
       voiceName: options.voice.voiceName,
       voiceLocation: isOfflineVoice(options.voice) ? "offline" : "cloud",
       detectedLang: options.lang,

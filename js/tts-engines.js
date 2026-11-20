@@ -1131,7 +1131,7 @@ function PiperTtsEngine() {
                 pitch: options.pitch,
                 rate: options.rate,
                 volume: options.volume,
-                externalPlayback: options.rate && options.rate != 1,
+                externalPlayback: true,
               })
             case "pause":
               return piper.sendRequest("pause")
@@ -1215,7 +1215,7 @@ function SupertonicTtsEngine() {
               pitch: options.pitch,
               rate: options.rate,
               volume: options.volume,
-              externalPlayback: options.rate && options.rate != 1,
+              externalPlayback: true,
             })
           case "pause":
             return supertonic.sendRequest("pause")
@@ -1299,7 +1299,7 @@ function PocketTtsEngine() {
               pitch: options.pitch,
               rate: options.rate,
               volume: options.volume,
-              externalPlayback: options.rate && options.rate != 1,
+              externalPlayback: true,
             })
           case "pause":
             return pocketTts.sendRequest("pause")

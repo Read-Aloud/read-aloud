@@ -349,5 +349,11 @@
   },
   "playback_status_toggle_dark_mode": {
     "message": "Иваз кардани ҳолати торик"
+  },
+  "playback_status_slower": {
+    "message": "Сусттар"
+  },
+  "playback_status_faster": {
+    "message": "Тезтар"
   }
 }

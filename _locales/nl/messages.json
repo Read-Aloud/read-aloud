@@ -349,5 +349,11 @@
   },
   "playback_status_toggle_dark_mode": {
     "message": "Donkere modus wisselen"
+  },
+  "playback_status_slower": {
+    "message": "Langzamer"
+  },
+  "playback_status_faster": {
+    "message": "Sneller"
   }
 }

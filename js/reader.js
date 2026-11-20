@@ -13,6 +13,7 @@ var readAloudReader = readAloudReader || immediate(() => {
     expand: "M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z",
     close: "M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z",
   }
+  const SPEED_PRESETS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 3]
   const FONT_SUBSETS = {
     "latin-ext": /[Ā-ʺḀ-ẟ]/,
     "vietnamese": /[ĂăĐđĨĩŨũƠơƯưẠ-ỹ]/,
@@ -24,7 +25,9 @@ var readAloudReader = readAloudReader || immediate(() => {
   let mode = "closed"   //expanded | minimized | closed
   let savedOverflow
   let pollTimer
-  let current = {state: "STOPPED", isSource: false, texts: null, position: null}
+  let changingRate = false
+  let speedFocusRevision = 0
+  let current = {state: "STOPPED", isSource: false, texts: null, position: null, rate: null, canChangeRate: false}
   let chunkParts = []
   let lastUserScroll = 0
   const loadedFontSubsets = new Set()
@@ -87,6 +90,7 @@ var readAloudReader = readAloudReader || immediate(() => {
         </div>
         <div class="ra-error" role="alert" hidden></div>
         <div class="ra-menu" hidden></div>
+        <div class="ra-menu ra-speed-menu" id="ra-speed-menu" role="group" aria-label="${escapeHtml(message("options_rate_label"))}" hidden></div>
         <div class="ra-bar" role="toolbar">
           ${button("rewind", "reader_rewind")}
           <span class="ra-loading" hidden></span>
@@ -96,6 +100,7 @@ var readAloudReader = readAloudReader || immediate(() => {
           ${button("forward", "reader_forward")}
           <span class="ra-status" hidden><span class="ra-voice"></span><span class="ra-progress"></span></span>
           <span class="ra-sep"></span>
+          <button type="button" class="ra-speed-button" data-action="speed" aria-controls="ra-speed-menu" aria-expanded="false" aria-label="${escapeHtml(message("options_rate_label"))}" hidden disabled>1×</button>
           <button type="button" class="ra-text-button" data-action="display" title="${escapeHtml(message("reader_display_settings"))}" aria-label="${escapeHtml(message("reader_display_settings"))}">Aa</button>
           ${button("settings", "reader_settings")}
           ${button("expand", "reader_expand")}
@@ -114,6 +119,7 @@ var readAloudReader = readAloudReader || immediate(() => {
       body: $(".ra-body"),
       error: $(".ra-error"),
       menu: $(".ra-menu"),
+      speedMenu: $(".ra-speed-menu"),
       loading: $(".ra-loading"),
       status: $(".ra-status"),
       voice: $(".ra-voice"),
@@ -121,6 +127,10 @@ var readAloudReader = readAloudReader || immediate(() => {
       buttons: Object.fromEntries(Array.from(shadow.querySelectorAll(".ra-bar button")).map(b => [b.dataset.action, b])),
     }
     root = els.root
+    root.addEventListener("focusin", onSpeedFocusChange)
+    root.addEventListener("click", event => {
+      if (!event.target.closest('[data-action="speed"], .ra-speed-menu')) setSpeedMenuOpen(false)
+    })
     els.favicon.addEventListener("error", () => els.favicon.hidden = true)
     shadow.querySelector(".ra-bar").addEventListener("click", event => {
       const target = event.target.closest("button")
@@ -143,7 +153,13 @@ var readAloudReader = readAloudReader || immediate(() => {
       if (["ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End", " "].includes(event.key)) lastUserScroll = Date.now()
     })
     window.addEventListener("keydown", event => {
-      if (event.key == "Escape" && mode != "closed" && !els.menu.hidden) {
+      if (event.key == "Escape" && mode != "closed" && !els.speedMenu.hidden) {
+        setSpeedMenuOpen(false)
+        els.buttons.speed.focus()
+        event.preventDefault()
+        event.stopPropagation()
+      }
+      else if (event.key == "Escape" && mode != "closed" && !els.menu.hidden) {
         els.menu.hidden = true
         event.stopPropagation()
       }
@@ -153,6 +169,10 @@ var readAloudReader = readAloudReader || immediate(() => {
         close()
       }
     }, true)
+    document.addEventListener("pointerdown", event => {
+      if (!els.speedMenu.hidden && !event.composedPath().includes(host)) setSpeedMenuOpen(false)
+    })
+    document.addEventListener("focusin", onSpeedFocusChange)
     document.addEventListener("visibilitychange", () => {
       if (!document.hidden && mode != "closed") update()
     })
@@ -165,6 +185,7 @@ var readAloudReader = readAloudReader || immediate(() => {
     }).observe(document.documentElement, {childList: true})
 
     buildMenu()
+    buildSpeedMenu()
     await applyDisplaySettings()
     settingsChange$.subscribe(changes => {
       if (changes.readerTheme || changes.readerTextSize || changes.readerTypography || changes.darkMode) applyDisplaySettings()
@@ -207,6 +228,7 @@ var readAloudReader = readAloudReader || immediate(() => {
    */
   function setMode(newMode) {
     mode = newMode
+    setSpeedMenuOpen(false)
     root.classList.toggle("minimized", mode == "minimized")
     host.style.setProperty("pointer-events", mode == "expanded" ? "auto" : "none", "important")
     if (mode == "expanded") {
@@ -272,6 +294,8 @@ var readAloudReader = readAloudReader || immediate(() => {
     if (isSource && stateInfo.playbackError) showError(stateInfo.playbackError)
     current.state = state
     current.isSource = isSource
+    current.rate = speech?.rate || null
+    current.canChangeRate = speech?.canChangeRate === true
     if (isSource && state == "STOPPED" && stateInfo.playbackCompleted && !stateInfo.playbackError) {
       setMode("closed")
       return
@@ -312,6 +336,7 @@ var readAloudReader = readAloudReader || immediate(() => {
     b.forward.hidden = b.rewind.hidden = !(active && (state == "PLAYING" || state == "PAUSED"))
     b.expand.hidden = mode != "minimized"
     b.close.hidden = mode == "minimized" && active
+    updateSpeedControls()
   }
 
   function updateStatus(state, speech) {
@@ -354,7 +379,8 @@ var readAloudReader = readAloudReader || immediate(() => {
         case "forward": await bgPageInvoke("forward"); break
         case "rewind": await bgPageInvoke("rewind"); break
         case "settings": await bgPageInvoke("openOptionsPage"); break
-        case "display": els.menu.hidden = !els.menu.hidden; break
+        case "display": setSpeedMenuOpen(false); els.menu.hidden = !els.menu.hidden; break
+        case "speed": setSpeedMenuOpen(els.speedMenu.hidden); break
         case "expand": setMode("expanded"); els.scroller.focus({preventScroll: true}); break
         case "close": close(); break
       }
@@ -363,6 +389,84 @@ var readAloudReader = readAloudReader || immediate(() => {
       showError(err)
     }
     if (mode != "closed") update()
+  }
+
+  function onSpeedFocusChange() {
+    const focused = root.getRootNode().activeElement
+    if (focused != els.buttons.speed && !els.speedMenu.contains(focused)) ++speedFocusRevision
+  }
+
+  function updateSpeedControls() {
+    const button = els.buttons.speed
+    const rate = current.rate || 1
+    const label = formatRate(rate)
+    button.textContent = label
+    button.title = message("options_rate_label") + ": " + label
+    button.setAttribute("aria-label", button.title)
+    button.hidden = !isActive() || current.canChangeRate !== true
+    button.disabled = button.hidden || !current.rate || changingRate
+    if (button.hidden || !current.rate) setSpeedMenuOpen(false)
+    for (const preset of els.speedMenu.querySelectorAll("button[data-rate]")) {
+      const selected = Number(preset.dataset.rate) == rate
+      preset.classList.toggle("selected", selected)
+      preset.setAttribute("aria-pressed", String(selected))
+      preset.disabled = button.disabled
+    }
+  }
+
+  function setSpeedMenuOpen(open) {
+    ++speedFocusRevision
+    open = open && isActive() && current.canChangeRate === true && !!current.rate && !changingRate
+    els.speedMenu.hidden = !open
+    els.buttons.speed.setAttribute("aria-expanded", String(open))
+    if (open) {
+      els.menu.hidden = true
+      updateSpeedControls()
+      const selected = els.speedMenu.querySelector('[aria-pressed="true"]') || els.speedMenu.querySelector("button")
+      selected?.focus()
+    }
+  }
+
+  async function setPlaybackRate(rate) {
+    if (!SPEED_PRESETS.includes(rate) || !isActive() || current.canChangeRate !== true || !current.rate || changingRate) return
+    const focusRevision = speedFocusRevision
+    changingRate = true
+    updateSpeedControls()
+    let completed = false
+    try {
+      const applied = await bgPageInvoke("setRate", [rate])
+      if (applied !== false) current.rate = rate
+      completed = true
+    }
+    catch (err) {
+      showError(err)
+    }
+    finally {
+      // Decide before our own dismissal invalidates the interaction. The owned
+      // (closed) shadow root, not document.activeElement, exposes inner focus.
+      const focused = root.getRootNode().activeElement
+      const restoreFocus = focusRevision == speedFocusRevision
+        && (!focused || focused == els.buttons.speed || els.speedMenu.contains(focused))
+      if (completed) setSpeedMenuOpen(false)
+      changingRate = false
+      updateSpeedControls()
+      if (restoreFocus && mode != "closed" && els.speedMenu.hidden && !els.buttons.speed.disabled) els.buttons.speed.focus()
+      if (mode != "closed") update()
+    }
+  }
+
+  function formatRate(rate) {
+    return new Intl.NumberFormat(brapi.i18n.getUILanguage(), {maximumFractionDigits: 2}).format(rate) + "×"
+  }
+
+  function buildSpeedMenu() {
+    els.speedMenu.innerHTML = `<span>${escapeHtml(message("options_rate_label"))}</span><div class="ra-speed-options">`
+      + SPEED_PRESETS.map(rate => `<button type="button" data-rate="${rate}" aria-pressed="false">${escapeHtml(formatRate(rate))}</button>`).join("")
+      + `</div>`
+    els.speedMenu.addEventListener("click", event => {
+      const preset = event.target.closest("button[data-rate]")
+      if (preset) return setPlaybackRate(Number(preset.dataset.rate))
+    })
   }
 
   function seek(index) {

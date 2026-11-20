@@ -349,5 +349,11 @@
   },
   "playback_status_toggle_dark_mode": {
     "message": "สลับโหมดมืด"
+  },
+  "playback_status_slower": {
+    "message": "ช้าลง"
+  },
+  "playback_status_faster": {
+    "message": "เร็วขึ้น"
   }
 }
