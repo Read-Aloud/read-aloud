@@ -71,6 +71,9 @@
   "options_highlighting_reader": {
     "message": "Mostra in modalità lettura"
   },
+  "options_highlighting_tab": {
+    "message": "Mostra in una scheda"
+  },
   "reader_play": {
     "message": "Riproduci"
   },

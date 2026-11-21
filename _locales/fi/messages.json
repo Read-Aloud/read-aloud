@@ -71,6 +71,9 @@
   "options_highlighting_reader": {
     "message": "Näytä lukutilassa"
   },
+  "options_highlighting_tab": {
+    "message": "Näytä välilehdessä"
+  },
   "reader_play": {
     "message": "Toista"
   },

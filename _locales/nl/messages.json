@@ -71,6 +71,9 @@
   "options_highlighting_reader": {
     "message": "Weergeven in leesmodus"
   },
+  "options_highlighting_tab": {
+    "message": "Weergeven in een tabblad"
+  },
   "reader_play": {
     "message": "Afspelen"
   },

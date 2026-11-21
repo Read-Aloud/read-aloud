@@ -71,6 +71,9 @@
   "options_highlighting_reader": {
     "message": "읽기 모드로 표시"
   },
+  "options_highlighting_tab": {
+    "message": "탭에서 표시"
+  },
   "reader_play": {
     "message": "재생"
   },

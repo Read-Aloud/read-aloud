@@ -71,6 +71,9 @@
   "options_highlighting_reader": {
     "message": "Afficher en mode lecture"
   },
+  "options_highlighting_tab": {
+    "message": "Afficher dans un onglet"
+  },
   "reader_play": {
     "message": "Lire"
   },

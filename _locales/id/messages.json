@@ -71,6 +71,9 @@
   "options_highlighting_reader": {
     "message": "Tampilkan dalam mode baca"
   },
+  "options_highlighting_tab": {
+    "message": "Tampilkan di tab"
+  },
   "reader_play": {
     "message": "Putar"
   },

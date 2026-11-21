@@ -74,6 +74,9 @@
   "options_highlighting_reader": {
     "message": "Hiển thị ở chế độ đọc"
   },
+  "options_highlighting_tab": {
+    "message": "Hiển thị trong tab"
+  },
   "reader_play": {
     "message": "Phát"
   },

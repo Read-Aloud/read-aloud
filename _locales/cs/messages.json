@@ -71,6 +71,9 @@
   "options_highlighting_reader": {
     "message": "Zobrazit v režimu čtečky"
   },
+  "options_highlighting_tab": {
+    "message": "Zobrazit na kartě"
+  },
   "reader_play": {
     "message": "Přehrát"
   },

@@ -71,6 +71,9 @@
   "options_highlighting_reader": {
     "message": "Нишон додан дар реҷаи хониш"
   },
+  "options_highlighting_tab": {
+    "message": "Намоиш дар ҷадвал"
+  },
   "reader_play": {
     "message": "Пахш"
   },

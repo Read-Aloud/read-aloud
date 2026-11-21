@@ -71,6 +71,9 @@
   "options_highlighting_reader": {
     "message": "عرض في وضع القراءة"
   },
+  "options_highlighting_tab": {
+    "message": "عرض في علامة تبويب"
+  },
   "reader_play": {
     "message": "تشغيل"
   },

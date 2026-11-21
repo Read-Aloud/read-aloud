@@ -71,6 +71,9 @@
   "options_highlighting_reader": {
     "message": "Im Lesemodus anzeigen"
   },
+  "options_highlighting_tab": {
+    "message": "In einem Tab anzeigen"
+  },
   "reader_play": {
     "message": "Wiedergabe"
   },

@@ -71,6 +71,9 @@
   "options_highlighting_reader": {
     "message": "在阅读模式中显示"
   },
+  "options_highlighting_tab": {
+    "message": "在标签页中显示"
+  },
   "reader_play": {
     "message": "播放"
   },

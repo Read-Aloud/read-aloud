@@ -71,6 +71,9 @@
   "options_highlighting_reader": {
     "message": "Показати в режимі читання"
   },
+  "options_highlighting_tab": {
+    "message": "Показати у вкладці"
+  },
   "reader_play": {
     "message": "Відтворити"
   },

@@ -20,6 +20,8 @@ $(function() {
 getSettings(["showHighlighting", "readAloudTab"]).then(async settings => {
   if (settings.showHighlighting == 2 && queryString.isPopup) {
     await popout(settings.readAloudTab)
+  } else if (settings.showHighlighting == 4 && queryString.isPopup) {
+    await openInTab(settings.readAloudTab)
   } else if (settings.showHighlighting == 3 && queryString.isPopup) {
     //reader mode replaces the popup; normally the toolbar button has no popup at all
     const activeTab = await getActiveTab()
@@ -49,6 +51,29 @@ async function popout(tabId) {
     })
     window.close()
   }
+}
+
+async function openInTab(tabId) {
+  const activeTab = await getActiveTab()
+  const url = brapi.runtime.getURL("popup.html?tab=" + activeTab.id)
+  let reusedTab = false
+  if (tabId) {
+    const tab = await getTab(tabId)
+    if (tab) {
+      const tabWindow = await getWindow(tab.windowId).catch(() => null)
+      if (tabWindow && tabWindow.type == "normal") {
+        try {
+          const updatedTab = await updateTab(tabId, {url, active: true})
+          await updateWindow(updatedTab.windowId, {focused: true}).catch(console.error)
+          reusedTab = true
+        } catch (err) {
+          console.error(err)
+        }
+      }
+    }
+  }
+  if (!reusedTab) await createTab(url)
+  window.close()
 }
 
 async function init() {
@@ -205,7 +230,7 @@ async function updateButtons() {
   $("#btnStop").toggle(state == "PAUSED" || state == "PLAYING" || state == "LOADING");
   $("#btnForward, #btnRewind").toggle(state == "PLAYING" || state == "PAUSED");
 
-  if ((showHighlighting == 1 || showHighlighting == 2) && (state == "LOADING" || state == "PAUSED" || state == "PLAYING") && speech) {
+  if ((showHighlighting == 1 || showHighlighting == 2 || showHighlighting == 4) && (state == "LOADING" || state == "PAUSED" || state == "PLAYING") && speech) {
     $("body").addClass("has-highlight")
     $("#highlight").show()
     updateHighlighting(speech)

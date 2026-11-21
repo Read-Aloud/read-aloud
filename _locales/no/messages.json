@@ -71,6 +71,9 @@
   "options_highlighting_reader": {
     "message": "Vis i lesemodus"
   },
+  "options_highlighting_tab": {
+    "message": "Vis i en fane"
+  },
   "reader_play": {
     "message": "Spill av"
   },

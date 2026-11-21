@@ -71,6 +71,9 @@
   "options_highlighting_reader": {
     "message": "Okuma modunda göster"
   },
+  "options_highlighting_tab": {
+    "message": "Bir sekmede göster"
+  },
   "reader_play": {
     "message": "Oynat"
   },

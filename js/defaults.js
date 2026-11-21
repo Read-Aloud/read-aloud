@@ -410,6 +410,15 @@ function getTab(tabId) {
   })
 }
 
+function getWindow(windowId) {
+  return new Promise(function(fulfill, reject) {
+    brapi.windows.get(windowId, function(window) {
+      if (window) fulfill(window)
+      else reject(brapi.runtime.lastError || new Error("Could not get window " + windowId))
+    })
+  })
+}
+
 function setTabUrl(tabId, url) {
   return new Promise(function(fulfill) {
     brapi.tabs.update(tabId, {url: url}, fulfill);

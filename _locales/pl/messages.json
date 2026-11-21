@@ -71,6 +71,9 @@
   "options_highlighting_reader": {
     "message": "Pokaż w trybie czytania"
   },
+  "options_highlighting_tab": {
+    "message": "Pokaż na karcie"
+  },
   "reader_play": {
     "message": "Odtwórz"
   },

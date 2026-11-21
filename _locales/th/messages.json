@@ -71,6 +71,9 @@
   "options_highlighting_reader": {
     "message": "แสดงในโหมดอ่าน"
   },
+  "options_highlighting_tab": {
+    "message": "แสดงในแท็บ"
+  },
   "reader_play": {
     "message": "เล่น"
   },

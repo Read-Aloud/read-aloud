@@ -71,6 +71,9 @@
   "options_highlighting_reader": {
     "message": "Visa i läsläge"
   },
+  "options_highlighting_tab": {
+    "message": "Visa i en flik"
+  },
   "reader_play": {
     "message": "Spela"
   },

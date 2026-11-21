@@ -71,6 +71,9 @@
   "options_highlighting_reader": {
     "message": "リーダーモードで表示"
   },
+  "options_highlighting_tab": {
+    "message": "タブで表示"
+  },
   "reader_play": {
     "message": "再生"
   },

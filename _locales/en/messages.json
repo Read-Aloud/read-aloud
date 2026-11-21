@@ -112,6 +112,9 @@
   "options_highlighting_reader": {
     "message": "Show in reader mode"
   },
+  "options_highlighting_tab": {
+    "message": "Show in a tab"
+  },
   "reader_play": {
     "message": "Play"
   },

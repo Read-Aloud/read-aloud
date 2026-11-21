@@ -71,6 +71,9 @@
   "options_highlighting_reader": {
     "message": "रीडर मोड में दिखाएँ"
   },
+  "options_highlighting_tab": {
+    "message": "टैब में दिखाएं"
+  },
   "reader_play": {
     "message": "चलाएँ"
   },
